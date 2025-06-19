@@ -13,6 +13,10 @@ st.set_page_config(
     layout="centered"
 )
 
+
+#Create Master CV directory
+if not os.path.exists("MasterCV"):
+    os.mkdir("MasterCV")
 # Title and description
 st.title("💬 CV Tailoring Assistant")
 st.markdown("""
