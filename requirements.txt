@@ -1,4 +1,9 @@
-streamlit>=1.24.0
-requests==2.31.0
-python-dotenv==1.0.1
+streamlit
+python-docx
+PyMuPDF
+markdown
+requests
+openai
+python-dotenv
+google-generativeai
 beautifulsoup4
