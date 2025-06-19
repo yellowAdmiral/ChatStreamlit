@@ -197,7 +197,7 @@ if st.session_state["uploader_visible"] and not st.session_state["file_uploaded"
 
     if uploaded_file is not None:
         # Define the full path where the file will be saved
-        save_dir = "masterCV"
+        save_dir = "MasterCV"
         import os
         save_path = os.path.join(save_dir, uploaded_file.name)
 
