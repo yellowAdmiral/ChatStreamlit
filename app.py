@@ -33,21 +33,11 @@ if "file_uploaded" not in st.session_state:
 
 if "job_description" not in st.session_state:
     st.session_state["job_description"] = None
-try:
-    master_cv_list = [f for f in os.listdir("MasterCV") if (f.endswith(".pdf") or f.endswith(".docx"))]
-except:
-    master_cv_list = []
+
+if "master_cv_content" not in st.session_state:
+    st.session_state["master_cv_content"] = None
+
 upload_message = st.sidebar.empty()
-# if switch_mode():
-#     st.write("Mode Switched")
-if len(master_cv_list)>0:
-    print(master_cv_list)
-    master_cv = read_file("masterCV/"+master_cv_list[0])
-    upload_message.markdown("MasterCV registered")
-else:
-    upload_message.markdown("""
-Please Upload a Master CV beore starting.
-""")
 
 # Show/hide AI and API provider details based on toggle
 show_details = show_details_toggle()
@@ -206,9 +196,8 @@ if st.session_state["uploader_visible"] and not st.session_state["file_uploaded"
             f.write(uploaded_file.getbuffer())
         st.sidebar.success(f"File saved to {save_path}")
         master_cv_list = [f for f in os.listdir("MasterCV") if (f.endswith(".pdf") or f.endswith(".docx"))]
+        st.sidebar.success(f"File saved to {save_path}")
+        st.session_state["master_cv_content"] = read_file(save_path)
         st.session_state["file_uploaded"] = True
-        if st.session_state["file_uploaded"]:
-            # print("here")
-            st.rerun()
-            # st.session_state["file_uploaded"] = False
-            st.session_state["uploader_visible"] = False
+        st.session_state["uploader_visible"] = False
+        st.rerun()

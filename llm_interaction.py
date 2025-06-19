@@ -27,9 +27,14 @@ def get_ollama_response(prompt, model, api_provider, api_key, type):
         "write a cover letter using the master CV provided" \
         "Ensure the output only the cover letter and nothing else." \
         "Use the name and contact details from the CV and job description" \
-        "DO NOT ASSUME ADDITIONAL SKILLS OR EXPERIENCES NOT IMPLIED IN THE MASTER CV" 
-    from data_handling import read_file, master_cv_list
-    master_cv_data = "Master CV:" + read_file(f"MasterCV/{master_cv_list[0]}")
+        "DO NOT ASSUME ADDITIONAL SKILLS OR EXPERIENCES NOT IMPLIED IN THE MASTER CV"
+
+    master_cv_content = st.session_state.get("master_cv_content")
+    if not master_cv_content:
+        st.error("Master CV content not found in session state. Please upload your CV.")
+        return None
+
+    master_cv_data = "Master CV:" + master_cv_content
     final_prompt = prompt_prefix + prompt + master_cv_data
     if api_provider == "Ollama":
         try:
@@ -73,7 +78,7 @@ def get_ollama_response(prompt, model, api_provider, api_key, type):
             model="gemini-2.0-flash", contents=final_prompt
         )
         # print(response.text)
-    
+
         # response.raise_for_status()
         return response.text
     else:
