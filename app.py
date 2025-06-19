@@ -106,7 +106,7 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 if "uploader_visible" not in st.session_state:
-    st.session_state["uploader_visible"] = False
+    st.session_state["uploader_visible"] = True
 def show_upload(state:bool):
     st.session_state["uploader_visible"] = state
     
