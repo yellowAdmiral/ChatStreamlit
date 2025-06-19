@@ -29,7 +29,7 @@ def get_ollama_response(prompt, model, api_provider, api_key, type):
         "Use the name and contact details from the CV and job description" \
         "DO NOT ASSUME ADDITIONAL SKILLS OR EXPERIENCES NOT IMPLIED IN THE MASTER CV" 
     from data_handling import read_file, master_cv_list
-    master_cv_data = "Master CV:" + read_file(f"masterCV/{master_cv_list[0]}")
+    master_cv_data = "Master CV:" + read_file(f"MasterCV/{master_cv_list[0]}")
     final_prompt = prompt_prefix + prompt + master_cv_data
     if api_provider == "Ollama":
         try:
