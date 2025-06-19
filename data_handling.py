@@ -9,8 +9,10 @@ from docx.shared import Inches
 from docx.enum.style import WD_STYLE_TYPE
 from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-
-master_cv_list = [f for f in os.listdir("MasterCV") if (f.endswith(".pdf") or f.endswith(".docx"))]
+try:
+    master_cv_list = [f for f in os.listdir("MasterCV") if (f.endswith(".pdf") or f.endswith(".docx"))]
+except:
+    master_cv_list = []
 
 save_dir = "masterCV"
 os.makedirs(save_dir, exist_ok=True)
