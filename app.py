@@ -29,8 +29,10 @@ if "file_uploaded" not in st.session_state:
 
 if "job_description" not in st.session_state:
     st.session_state["job_description"] = None
-master_cv_list = [f for f in os.listdir("MasterCV") if (f.endswith(".pdf") or f.endswith(".docx"))]
-
+try:
+    master_cv_list = [f for f in os.listdir("MasterCV") if (f.endswith(".pdf") or f.endswith(".docx"))]
+except:
+    master_cv_list = []
 upload_message = st.sidebar.empty()
 # if switch_mode():
 #     st.write("Mode Switched")
