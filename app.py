@@ -8,12 +8,12 @@ import web_parser # Import web_parser
 
 # Configure the page
 st.set_page_config(
-    page_title="Chat with Ollama",
+    page_title="Get CV assistance",
     page_icon="🤖",
     layout="centered",
     initial_sidebar_state="expanded"
 )
-
+regenerate_cv_button = None
 
 #Create Master CV directory
 if not os.path.exists("MasterCV"):
@@ -113,13 +113,21 @@ def show_upload(state:bool):
     
 
 # Chat input and buttons
-cols = st.columns([0.8, 0.2]) # Adjust column ratios as needed
+if st.session_state["job_description"] is None:
+    cols = st.columns([0.8, 0.2]) # Adjust column ratios as needed
 
-with cols[0]:
-    prompt = st.chat_input("What's on your mind?")
+    with cols[0]:
+        prompt = st.chat_input("Enter the Job description or link")
 
-with cols[1]:
-    generate_cover_letter_button = st.button("Generate Cover Letter")
+    with cols[1]:
+        generate_cover_letter_button = st.button("Generate Cover Letter")
+else:
+    cols = st.columns([0.8, 0.2]) # Adjust column ratios as needed
+    with cols[0]:
+        generate_cover_letter_button = st.button("Generate Cover Letter")
+    with cols[1]:
+        regenerate_cv_button = st.button("Regenerate CV")
+    prompt = None # Set prompt to None when input is hidden
 
 if prompt:
     # Add user message to chat history
@@ -132,25 +140,31 @@ if prompt:
     # Check if the prompt is a URL
     if prompt.startswith('http://') or prompt.startswith('https://'):
         job_info = web_parser.parse_job_description(prompt)
-        st.session_state["job_description"] =  job_info['job_description']# TODO: Implement web_parser to get job description
-        st.session_state["company_name"] = job_info['company']
-        st.session_state.messages.append({"role": "user", "content": f"After scraping the link we got:\n{st.session_state['job_description']}"})
-        with st.chat_message("user"):
-            st.markdown(f"After scraping the link we got: \n\n Job Posted by: {st.session_state['company_name']} \n\n Job Description: {st.session_state['job_description']}")
-        # st.write("Job description extracted from URL (TODO: Implement web_parser fully)")
-    else:
+        if job_info is not None:
+            st.session_state["job_description"] =  job_info['job_description']
+            st.session_state["company_name"] = job_info['company']
+            st.session_state.messages.append({"role": "user", "content": f"After scraping the link we got:\n{st.session_state['job_description']}"})
+            with st.chat_message("user"):
+                st.markdown(f"After scraping the link we got: \n\n Job Posted by: {st.session_state['company_name']} \n\n Job Description: {st.session_state['job_description']}")
+            # st.write("Job description extracted from URL (TODO: Implement web_parser fully)")
+        else:
+            st.warning("The link could not be scraped. Some websites block scrapers so you may try manually copying the job description.")
+            st.session_state["job_description"] = None
+    else:   
         st.session_state["job_description"] = prompt
 
     # Get and display assistant response
-    with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            response = get_model_response(st.session_state["job_description"], model, api_provider, api_key, "CV")
-            if response:
-                st.markdown(response)
-                # Add assistant response to chat history
-                st.session_state.messages.append({"role": "assistant", "content": response})
-            else:
-                st.error("Failed to get response from Ollama. Please make sure Ollama is running.")
+    if st.session_state["job_description"] is not None:
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                response = get_model_response(st.session_state["job_description"], model, api_provider, api_key, "CV")
+                if response:
+                    st.markdown(response)
+                    # Add assistant response to chat history
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                else:
+                    st.error("Failed to get response from Ollama. Please make sure Ollama is running.")
+    st.rerun()
 
 if generate_cover_letter_button:
     # TODO: Implement cover letter generation logic here
@@ -169,8 +183,28 @@ if generate_cover_letter_button:
                     st.session_state.messages.append({"role": "assistant", "content": response})
                 else:
                     st.error("Failed to get response from Ollama. Please make sure Ollama is running.")
+    st.rerun()
 
-    # st.write("Generate Cover Letter button clicked!") # Placeholder
+if regenerate_cv_button:
+    # TODO: Implement regenerate CV logic here
+    if not st.session_state["job_description"]:
+        st.write("Please send a job description first")
+    else:
+        st.session_state.messages.append({"role": "user", "content": "Regenerate CV"})
+        with st.chat_message("user"):
+            st.markdown("Regenerate CV")
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                # Assuming regenerate CV uses the same logic as initial CV generation
+                response = get_model_response(st.session_state["job_description"], model, api_provider, api_key, "CV")
+                if response:
+                    st.markdown(response)
+                    # Add assistant response to chat history
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                else:
+                    st.error("Failed to get response from Model.")
+    st.rerun()
+
 
 if button1:
     save_chat_history(st.session_state.messages, model)

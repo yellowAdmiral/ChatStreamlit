@@ -52,7 +52,10 @@ def create_docx(text):
     document = Document()
     text = text.replace("```", "").replace("markdown","")
     document.add_paragraph(text)
-    filename = st.session_state['user_name'] + "_" + st.session_state['company_name']
+    if st.session_state['company_name'] is not None:
+        filename = st.session_state['user_name'] + "_" + st.session_state['company_name']
+    else:
+        filename = st.session_state['user_name'] + "edited"
     document.save(filename)
     return filename
 

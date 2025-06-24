@@ -1,10 +1,9 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import time # Import time for potential waits
 from google import genai
 from pydantic import BaseModel
 import os
+import requests # Ensure requests is imported
 
 class JobInfo(BaseModel):
     company_name: str
@@ -12,7 +11,7 @@ class JobInfo(BaseModel):
 
 def parse_job_description(url):
     """
-    Parses a website for job description and company name using Selenium and BeautifulSoup.
+    Parses a website for job description and company name using requests and BeautifulSoup.
 
     Args:
         url (str): The URL of the job posting.
@@ -21,31 +20,33 @@ def parse_job_description(url):
         dict: A dictionary containing 'company' and 'job_description',
               or None if parsing fails.
     """
-    driver = None # Initialize driver to None
-    page_source = None # Initialize page_source to None
     try:
         if "linkedin.com" in url:
             # --- LinkedIn Parsing Logic (without Selenium) ---
-            import requests
             response = requests.get(url)
             response.raise_for_status() # Raise an exception for bad status codes
             page_source = response.text
             # --- End LinkedIn Parsing Logic ---
         else:
-            # --- General Website Parsing Logic (with Selenium) ---
-            # Set up Selenium WebDriver (ensure you have the appropriate driver installed and in your PATH)
-            # For Chrome: webdriver.Chrome()
-            # For Firefox: webdriver.Firefox()
-            # You might need to add options for headless browsing etc.
-            driver = webdriver.Chrome() 
-            
-            driver.get(url)
-
-            # Optional: Add a wait here if the page content is loaded dynamically
-            # time.sleep(5) # Example: wait for 5 seconds
-
-            # Get the page source after Selenium has loaded the page
-            page_source = driver.page_source
+            # --- General Website Parsing Logic (with requests and retry) ---
+            page_source = None
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' # Example User-Agent
+            }
+            retries = 3
+            for i in range(retries):
+                try:
+                    response = requests.get(url, headers=headers, timeout=10) # Added timeout
+                    response.raise_for_status() # Raise an exception for bad status codes (including 403)
+                    page_source = response.text
+                    print(f"Successfully fetched {url} on attempt {i+1}")
+                    break # Exit loop if successful
+                except requests.exceptions.RequestException as e:
+                    print(f"Attempt {i+1} failed for {url}: {e}")
+                    if i < retries - 1:
+                        time.sleep(2 ** i) # Exponential backoff delay
+                    else:
+                        print(f"Failed to fetch {url} after {retries} attempts.")
             # --- End General Website Parsing Logic ---
 
         if not page_source:
@@ -138,10 +139,6 @@ def parse_job_description(url):
     except Exception as e:
         print(f"An error occurred during parsing: {e}")
         return None
-    finally:
-        if driver:
-            driver.quit() # Ensure the browser is closed even if an error occurs
-
 if __name__ == '__main__':
     # Example Usage (replace with a real job posting URL for testing)
     test_url = "https://www.linkedin.com/jobs/view/4249975436" # Replace with a real URL
