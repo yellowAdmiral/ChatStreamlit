@@ -10,5 +10,5 @@ beautifulsoup4
 google-genai
 sentence-transformers
 spacy
-numpy<2
+numpy==2.2.3
 selenium
