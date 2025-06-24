@@ -2,7 +2,7 @@ import streamlit as st
 import os
 from ui import api_key_input, download_button, chat_buttons, upload_master_cv, show_details_toggle, switch_mode
 from data_handling import save_chat_history, load_chat_history, read_file
-from llm_interaction import get_ollama_response
+from llm_interaction import get_model_response
 from utils import generate_chat_title
 import web_parser # Import web_parser
 
@@ -10,7 +10,8 @@ import web_parser # Import web_parser
 st.set_page_config(
     page_title="Chat with Ollama",
     page_icon="🤖",
-    layout="centered"
+    layout="centered",
+    initial_sidebar_state="expanded"
 )
 
 
@@ -33,6 +34,12 @@ if "file_uploaded" not in st.session_state:
 
 if "job_description" not in st.session_state:
     st.session_state["job_description"] = None
+
+if "company_name" not in st.session_state:
+    st.session_state["company_name"] = None
+
+if "user_name" not in st.session_state:
+    st.session_state["user_name"] = None
 
 if "master_cv_content" not in st.session_state:
     st.session_state["master_cv_content"] = None
@@ -126,9 +133,10 @@ if prompt:
     if prompt.startswith('http://') or prompt.startswith('https://'):
         job_info = web_parser.parse_job_description(prompt)
         st.session_state["job_description"] =  job_info['job_description']# TODO: Implement web_parser to get job description
+        st.session_state["company_name"] = job_info['company']
         st.session_state.messages.append({"role": "user", "content": f"After scraping the link we got:\n{st.session_state['job_description']}"})
         with st.chat_message("user"):
-            st.markdown(f"After scraping the link we got:\n{st.session_state['job_description']}")
+            st.markdown(f"After scraping the link we got: \n\n Job Posted by: {st.session_state['company_name']} \n\n Job Description: {st.session_state['job_description']}")
         # st.write("Job description extracted from URL (TODO: Implement web_parser fully)")
     else:
         st.session_state["job_description"] = prompt
@@ -136,8 +144,8 @@ if prompt:
     # Get and display assistant response
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
-            response = get_ollama_response(st.session_state["job_description"], model, api_provider, api_key, "CV")
-            if response and response.strip():
+            response = get_model_response(st.session_state["job_description"], model, api_provider, api_key, "CV")
+            if response:
                 st.markdown(response)
                 # Add assistant response to chat history
                 st.session_state.messages.append({"role": "assistant", "content": response})
@@ -154,7 +162,7 @@ if generate_cover_letter_button:
             st.markdown("Generate Cover Letter")
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                response = get_ollama_response(st.session_state["job_description"], model, api_provider, api_key, "CL")
+                response = get_model_response(st.session_state["job_description"], model, api_provider, api_key, "CL")
                 if response and response.strip():
                     st.markdown(response)
                     # Add assistant response to chat history

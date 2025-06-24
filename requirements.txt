@@ -8,3 +8,7 @@ python-dotenv
 google-generativeai
 beautifulsoup4
 google-genai
+sentence-transformers
+spacy
+numpy<2
+selenium

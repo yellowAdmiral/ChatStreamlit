@@ -1,6 +1,9 @@
 import requests
 import streamlit as st
 import openai
+from pydantic import BaseModel
+from typing import List, Optional
+import json
 
 # Function to get response from LLM
 import os
@@ -8,7 +11,39 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def get_ollama_response(prompt, model, api_provider, api_key, type):
+class Skill(BaseModel):
+    skill_subcategory: str
+    skill_list: List[str]
+
+class Experience(BaseModel):
+    company_name: str
+    date_from: str
+    date_to: str
+    responsibilities: List[str]
+
+class Education(BaseModel):
+    degree: str
+    university: str
+    grade: str
+    date_from: str
+    date_to: str
+
+class Project(BaseModel):
+    project_title: str
+    description: List[str]
+
+class CV(BaseModel):
+    full_name: str
+    linkedin: str
+    github: Optional[str] = None
+    personal_profile: str
+    skills: List[Skill]
+    experience: List[Experience]
+    education: List[Education]
+    projects: List[Project]
+
+
+def get_model_response(prompt, model, api_provider, api_key, type):
     if type == "CV":
         prompt_prefix = "Based on this job description, identify keywords, skills and experience requirements" \
         "and tailor the master CV. Select a subset of relevant projects from the master CV with a concise profile." \
@@ -74,13 +109,63 @@ def get_ollama_response(prompt, model, api_provider, api_key, type):
             return None
         client = genai.Client(api_key=gemini_api_key)
 
-        response = client.models.generate_content(
-            model="gemini-2.0-flash", contents=final_prompt
-        )
-        # print(response.text)
-
-        # response.raise_for_status()
-        return response.text
+        if type == "CV":
+            response = client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=final_prompt,
+                config={
+                    "response_mime_type": "application/json",
+                    "response_schema": CV,
+                },
+            )
+            markdown_cv = cv_to_markdown(response.parsed)
+            return markdown_cv
+        else:
+            response = client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=final_prompt,
+            )
+            return response.text
     else:
         st.error("API Provider not implemented yet.")
         return None
+
+def cv_to_markdown(cv_data: CV) -> str:
+    """Converts a CV object to a Markdown formatted string."""
+    st.session_state['user_name'] = cv_data.full_name
+    markdown_output = f"# **{cv_data.full_name}**\n\n"
+
+    markdown_output += f"**LinkedIn:** {cv_data.linkedin}\n"
+    if cv_data.github:
+        markdown_output += f"**GitHub:** {cv_data.github}\n\n"
+    else:
+        markdown_output += "\n"
+
+    markdown_output += f"**Personal Profile**\n{cv_data.personal_profile}\n\n"
+
+    markdown_output += "**Skills**\n"
+    for skill_category in cv_data.skills:
+        markdown_output += f"- **{skill_category.skill_subcategory}**"
+        for skill in skill_category.skill_list:
+            markdown_output += f" {skill},"
+        markdown_output += "\n\n"
+
+    markdown_output += "**Experience**\n\n"
+    for job in cv_data.experience:
+        markdown_output += f"**{job.company_name} ({job.date_from} - {job.date_to})**\n"
+        for responsibility in job.responsibilities:
+            markdown_output += f"- {responsibility}\n"
+        markdown_output += "\n"
+
+    markdown_output += "**Education**\n\n"
+    for education in cv_data.education:
+        markdown_output += f"**{education.degree}, {education.university}, {education.grade} ({education.date_from} - {education.date_to})**\n\n"
+
+    markdown_output += "**Projects**\n\n"
+    for project in cv_data.projects:
+        markdown_output += f"**{project.project_title}**\n"
+        for description_point in project.description:
+            markdown_output += f"- {description_point}\n"
+        markdown_output += "\n"
+
+    return markdown_output

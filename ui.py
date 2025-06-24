@@ -27,7 +27,7 @@ def download_button(messages):
             st.sidebar.download_button(
                 label="Confirm",
                 data=f,
-                file_name="Updated CV",
+                file_name= docx_file,
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             )
     if st.sidebar.button("Download Cover Letter") and len(messages) > 0:
