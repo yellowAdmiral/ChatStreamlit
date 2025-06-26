@@ -7,6 +7,13 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="expanded"
 )
+try:
+    import spacy
+    spacy.load("en_core_web_sm")
+except OSError:
+    import subprocess
+    subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
+
 from ui import api_key_input, download_button, chat_buttons, upload_master_cv, show_details_toggle, switch_mode
 from data_handling import save_chat_history, load_chat_history, read_file
 from llm_interaction import get_model_response
@@ -14,6 +21,7 @@ from utils import generate_chat_title
 from CV_scorer.simple_scorer import get_similarity_score, get_keyword_overlap
 import web_parser # Import web_parser
 
+# Download the spaCy model if it's not already present
 
 regenerate_cv_button = None
 check_fit_score_button = None
