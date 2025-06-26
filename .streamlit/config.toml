@@ -1,0 +1,14 @@
+[server]
+enableCORS = false
+
+[client]
+toolbarMode = "viewer"
+
+[runner]
+fastReruns = true
+
+[browser]
+gatherUsageStats = false
+
+[run]
+post_install = "python download_models.py"
