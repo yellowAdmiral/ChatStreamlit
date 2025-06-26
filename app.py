@@ -1,11 +1,5 @@
 import streamlit as st
 import os
-from ui import api_key_input, download_button, chat_buttons, upload_master_cv, show_details_toggle, switch_mode
-from data_handling import save_chat_history, load_chat_history, read_file
-from llm_interaction import get_model_response
-from utils import generate_chat_title
-import web_parser # Import web_parser
-
 # Configure the page
 st.set_page_config(
     page_title="Get CV assistance",
@@ -13,8 +7,16 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="expanded"
 )
-regenerate_cv_button = None
+from ui import api_key_input, download_button, chat_buttons, upload_master_cv, show_details_toggle, switch_mode
+from data_handling import save_chat_history, load_chat_history, read_file
+from llm_interaction import get_model_response
+from utils import generate_chat_title
+from CV_scorer.simple_scorer import get_similarity_score, get_keyword_overlap
+import web_parser # Import web_parser
 
+
+regenerate_cv_button = None
+check_fit_score_button = None
 #Create Master CV directory
 if not os.path.exists("MasterCV"):
     os.mkdir("MasterCV")
@@ -43,6 +45,9 @@ if "user_name" not in st.session_state:
 
 if "master_cv_content" not in st.session_state:
     st.session_state["master_cv_content"] = None
+
+if "modified_cv" not in st.session_state:
+    st.session_state["modified_cv"] = None
 
 upload_message = st.sidebar.empty()
 
@@ -122,11 +127,13 @@ if st.session_state["job_description"] is None:
     with cols[1]:
         generate_cover_letter_button = st.button("Generate Cover Letter")
 else:
-    cols = st.columns([0.8, 0.2]) # Adjust column ratios as needed
+    cols = st.columns([0.6, 0.2, 0.2]) # Adjust column ratios as needed
     with cols[0]:
         generate_cover_letter_button = st.button("Generate Cover Letter")
     with cols[1]:
         regenerate_cv_button = st.button("Regenerate CV")
+    with cols[2]:
+        check_fit_score_button = st.button("Check Fit Score")
     prompt = None # Set prompt to None when input is hidden
 
 if prompt:
@@ -160,6 +167,7 @@ if prompt:
                 response = get_model_response(st.session_state["job_description"], model, api_provider, api_key, "CV")
                 if response:
                     st.markdown(response)
+                    st.session_state["modified_cv"] = response
                     # Add assistant response to chat history
                     st.session_state.messages.append({"role": "assistant", "content": response})
                 else:
@@ -205,6 +213,35 @@ if regenerate_cv_button:
                     st.error("Failed to get response from Model.")
     st.rerun()
 
+if check_fit_score_button:
+    if not st.session_state["job_description"] or not st.session_state.messages:
+        st.write("Please generate a CV first.")
+    else:
+        # Assuming the last assistant message is the generated CV
+        generated_cv_content = st.session_state.messages[-1]["content"]
+        
+        fit_score = get_similarity_score(generated_cv_content, st.session_state["job_description"])
+        st.markdown(f"## ✅ Fit Score: `{fit_score * 100:.1f}%`")
+        st.progress(fit_score)
+        matched_keywords, missing_keywords = get_keyword_overlap(generated_cv_content, st.session_state["job_description"])
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("### 🔑 Matching Keywords")
+            if matched_keywords:
+                st.success(", ".join(matched_keywords))
+            else:
+                st.warning("No overlapping keywords found.")
+
+        with col2:
+            st.markdown("### ❌ Missing Keywords (Consider adding)")
+            if missing_keywords:
+                st.info(", ".join(missing_keywords))
+            else:
+                st.success("Great! All important keywords are covered.")
+
+
 
 if button1:
     save_chat_history(st.session_state.messages, model)
@@ -243,3 +280,4 @@ if st.session_state["uploader_visible"] and not st.session_state["file_uploaded"
         st.session_state["file_uploaded"] = True
         st.session_state["uploader_visible"] = False
         st.rerun()
+st.caption("Powered by Sentence-BERT, spaCy, and Streamlit")
