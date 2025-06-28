@@ -1,4 +1,5 @@
 import streamlit as st
+from data_handling import create_docx_from_CV
 import os
 def load_api_key(api_provider, filename="api_keys.json"):
     import json
@@ -21,8 +22,8 @@ def api_key_input(api_provider):
 def download_button(messages):
     # Download button
     if st.sidebar.button("Download Updated CV") and len(messages) > 0:
-        from data_handling import create_docx
-        docx_file = create_docx(st.session_state["modified_cv"])
+        # from data_handling import create_docx
+        docx_file = create_docx_from_CV(st.session_state["updated_CV_obj"])
         with open(docx_file, "rb") as f:
             st.sidebar.download_button(
                 label="Confirm",
@@ -32,8 +33,8 @@ def download_button(messages):
             )
         os.remove(docx_file)
     if st.sidebar.button("Download Cover Letter") and len(messages) > 0:
-        from data_handling import create_docx
-        docx_file = create_docx(messages[-1]["content"])
+        # from data_handling import create_docx
+        docx_file = create_docx_from_CV(st.session_state.messages['assistant'][-1])
         with open(docx_file, "rb") as f:
             st.sidebar.download_button(
                 label="Confirm",

@@ -1,46 +1,15 @@
 import requests
 import streamlit as st
 import openai
-from pydantic import BaseModel
-from typing import List, Optional
 import json
+from datatypes.CV_obj import CV
+
 
 # Function to get response from LLM
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
-
-class Skill(BaseModel):
-    skill_subcategory: str
-    skill_list: List[str]
-
-class Experience(BaseModel):
-    company_name: str
-    date_from: str
-    date_to: str
-    responsibilities: List[str]
-
-class Education(BaseModel):
-    degree: str
-    university: str
-    grade: str
-    date_from: str
-    date_to: str
-
-class Project(BaseModel):
-    project_title: str
-    description: List[str]
-
-class CV(BaseModel):
-    full_name: str
-    linkedin: str
-    github: Optional[str] = None
-    personal_profile: str
-    skills: List[Skill]
-    experience: List[Experience]
-    education: List[Education]
-    projects: List[Project]
 
 
 def get_model_response(prompt, model, api_provider, api_key, type):
@@ -118,6 +87,7 @@ def get_model_response(prompt, model, api_provider, api_key, type):
                     "response_schema": CV,
                 },
             )
+            st.session_state["updated_CV_obj"] = response.parsed
             markdown_cv = cv_to_markdown(response.parsed)
             return markdown_cv
         else:

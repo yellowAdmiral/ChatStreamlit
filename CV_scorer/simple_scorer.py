@@ -1,49 +1,29 @@
 import streamlit as st
-from sentence_transformers import SentenceTransformer, util
-import spacy
-
-
-# Load models once
-@st.cache_resource
-def load_model():
-    return SentenceTransformer('all-MiniLM-L6-v2')
-
-@st.cache_resource
-def load_nlp():
-    return spacy.load("en_core_web_sm")
-
-model = load_model()
-nlp = load_nlp()
-
-# Custom irrelevant terms to ignore
-irrelevant_keywords = set([
-    'experience', 'work', 'skills', 'role', 'team', 'great', 'good', 'ability',
-    'strong', 'want', 'you', 'your', 'their', 'we', 'us', 'our', 'can', 'will',
-    'new', 'build', 'across', 'help', 'enable', 'about', 'get', 'give', 'need',
-    'have', 'has', 'make', 'take', 'who', 'what', 'where', 'when', 'how',
-    'improve', 'develop', 'create', 'workplace', 'benefit', 'company', 'teams',
-    'employees', 'opportunity', 'opportunities', 'fit', 'like'
-])
+import requests
 
 # Helper functions
-def get_similarity_score(resume: str, jd: str) -> float:
-    embeddings = model.encode([resume, jd])
-    score = util.cos_sim(embeddings[0], embeddings[1]).item()
-    return round(score, 2)
+def get_similarity_score(resume: str, jd: str) -> tuple[float, list, list]:
+    API_URL = "https://pranup-cv_scorer_api_v1.hf.space/analyze"
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "cv": resume,
+        "job_description": jd
+    }
+    try:
+        response = requests.post(API_URL, headers=headers, json=payload)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        result = response.json()
+        
+        fit_score = result.get("fit_score")
+        keyword_comparison = result.get("keyword_comparison", {})
+        matched_keywords = keyword_comparison.get("matched_keywords", [])
+        missing_keywords = keyword_comparison.get("missing_keywords", [])
 
-def extract_relevant_keywords(text: str) -> set:
-    doc = nlp(text)
-    keywords = set()
-    for token in doc:
-        if token.pos_ in {"NOUN", "PROPN"} and not token.is_stop:
-            word = token.text.lower()
-            if len(word) > 2 and word not in irrelevant_keywords:
-                keywords.add(word)
-    return keywords
-
-def get_keyword_overlap(resume_text: str, jd_text: str):
-    resume_kw = extract_relevant_keywords(resume_text)
-    jd_kw = extract_relevant_keywords(jd_text)
-    matched = sorted(resume_kw & jd_kw)
-    missing = sorted(jd_kw - resume_kw)
-    return matched, missing
+        if fit_score is not None:
+            return round(fit_score, 2), matched_keywords, missing_keywords
+        else:
+            st.error("API response did not contain 'fit_score'.")
+            return 0.0, [], []
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error calling API: {e}")
+        return 0.0, [], []
