@@ -24,3 +24,6 @@ def init_state():
 
     if "updated_CV_obj" not in st.session_state:
         st.session_state["updated_CV_obj"]= None
+
+    if "cover_letter" not in st.session_state:
+        st.session_state["cover_letter"] = None

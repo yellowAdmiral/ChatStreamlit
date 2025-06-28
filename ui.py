@@ -32,14 +32,14 @@ def download_button(messages):
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             )
         os.remove(docx_file)
-    if st.sidebar.button("Download Cover Letter") and len(messages) > 0:
-        # from data_handling import create_docx
-        docx_file = create_docx_from_CV(st.session_state.messages['assistant'][-1])
+    if st.sidebar.button("Download Cover Letter") and st.session_state["cover_letter"] is not None:
+        from data_handling import create_docx
+        docx_file = create_docx(st.session_state["cover_letter"])
         with open(docx_file, "rb") as f:
             st.sidebar.download_button(
                 label="Confirm",
                 data=f,
-                file_name="Cover Letter",
+                file_name=f"{st.session_state['user_name']}_CL",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             )
 

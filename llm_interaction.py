@@ -95,6 +95,7 @@ def get_model_response(prompt, model, api_provider, api_key, type):
                 model="gemini-2.0-flash",
                 contents=final_prompt,
             )
+            st.session_state["cover_letter"] = response.text
             return response.text
     else:
         st.error("API Provider not implemented yet.")
