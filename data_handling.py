@@ -81,7 +81,7 @@ def create_docx_from_CV(cv_data: CV) -> str:
 
     # Contact Details
     contact_paragraph = document.add_paragraph()
-    contact_details = cv_data.linkedin
+    contact_details = f"{cv_data.linkedin} {cv_data.contact_details.email_id} {cv_data.contact_details.phone_number if cv_data.contact_details.phone_number is not None else ''}"
     if cv_data.github:
         contact_details += f" | {cv_data.github}"
     contact_run = contact_paragraph.add_run(contact_details)

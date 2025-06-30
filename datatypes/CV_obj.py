@@ -25,8 +25,13 @@ class Project(BaseModel):
     project_title: str
     description: List[str]
 
+class ContactDetails(BaseModel):
+    phone_number: Optional[str]
+    email_id: str
+
 class CV(BaseModel):
     full_name: str
+    contact_details: ContactDetails
     linkedin: str
     github: Optional[str] = None
     personal_profile: str

@@ -12,7 +12,7 @@ from ui import api_key_input, download_button, chat_buttons, upload_master_cv, s
 from data_handling import save_chat_history, load_chat_history, read_file
 from llm_interaction import get_model_response
 from utils import generate_chat_title
-from CV_scorer.simple_scorer import get_similarity_score
+from CV_scorer.simple_scorer import get_similarity_score, get_similarity_score_locally
 from init_state_vars import init_state
 import web_parser # Import web_parser
 
@@ -203,7 +203,7 @@ if check_fit_score_button:
         # Assuming the last assistant message is the generated CV
         generated_cv_content = st.session_state.messages[-1]["content"]
         
-        fit_score, matched_keywords, missing_keywords = get_similarity_score(generated_cv_content, st.session_state["job_description"])
+        fit_score, matched_keywords, missing_keywords = get_similarity_score_locally(generated_cv_content, st.session_state["job_description"])
         st.markdown(f"## ✅ Fit Score: `{fit_score * 100:.1f}%`")
         st.progress(fit_score)
         
