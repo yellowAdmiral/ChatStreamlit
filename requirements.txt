@@ -9,7 +9,6 @@ google-generativeai
 beautifulsoup4
 google-genai
 sentence-transformers
-spacy
 numpy==2.2.3
 selenium
 spacy==3.5.0
