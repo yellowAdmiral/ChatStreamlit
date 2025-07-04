@@ -4,11 +4,11 @@ PyMuPDF
 markdown
 requests
 openai
-python-dotenv
-google-generativeai
+python-doten
 beautifulsoup4
 google-genai
 sentence-transformers
-numpy==2.2.3
-spacy>=3.0.0,<4.0.0
-https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.0.0/en_core_web_sm-3.0.0.tar.gz#egg=en_core_web_sm
+numpy
+spacy
+docx
+en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
